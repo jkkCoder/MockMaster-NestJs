@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(uuid())
+  username       String    @unique @db.VarChar(255)
+  hashedPassword String    @map("hashed_password") @db.VarChar(255)
+  fullName       String    @map("full_name") @db.VarChar(255)
+  mail           String    @unique @db.VarChar(255)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  
+  attempts       Attempt[]
+  
+  @@map("users")
+}
+
+model Mock {
+  id          String        @id @default(uuid())
+  title       String        @db.VarChar(255)
+  description String?       @db.Text
+  duration    Int           // Duration in minutes
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  
+  sections    MockSection[]
+  questions   Question[]
+  attempts    Attempt[]
+  
+  @@map("mocks")
+}
+
+model MockSection {
+  id        String     @id @default(uuid())
+  mockId    String     @map("mock_id")
+  name      String     @db.VarChar(255)
+  sortOrder Int        @map("sort_order")
+  
+  mock      Mock       @relation(fields: [mockId], references: [id], onDelete: Cascade)
+  questions Question[]
+  
+  @@unique([mockId, sortOrder])
+  @@map("mock_sections")
+}
+
+model Question {
+  id            String    @id @default(uuid())
+  mockId        String    @map("mock_id")
+  mockSectionId String?   @map("mock_section_id")
+  imageUrl      String?   @map("image_url") @db.VarChar(500)
+  marks         Float     @default(1)
+  negativeMark  Float     @default(0) @map("negative_mark")
+  sortOrder     Int       @map("sort_order")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  
+  mock          Mock      @relation(fields: [mockId], references: [id], onDelete: Cascade)
+  mockSection   MockSection? @relation(fields: [mockSectionId], references: [id], onDelete: SetNull)
+  options       Option[]
+  answers       Answer[]
+  
+  @@map("questions")
+}
+
+model Option {
+  id        String    @id @default(uuid())
+  questionId String   @map("question_id")
+  imageUrl  String?   @map("image_url") @db.VarChar(500)
+  label     String    @db.VarChar(1) // A, B, C, D
+  text      String?   @db.Text
+  isCorrect Boolean   @default(false) @map("is_correct")
+  sortOrder Int       @map("sort_order")
+  
+  question Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  Answer[]
+  
+  @@unique([questionId, label])
+  @@map("options")
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  AUTO_SUBMITTED
+}
+
+model Attempt {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  mockId      String        @map("mock_id")
+  startedAt   DateTime      @map("started_at")
+  submittedAt DateTime?     @map("submitted_at")
+  timeTaken   Int?          @map("time_taken") // Time taken in seconds
+  score       Float?        @default(0)
+  percentage  Float?        @default(0)
+  status      AttemptStatus @default(IN_PROGRESS)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mock        Mock          @relation(fields: [mockId], references: [id], onDelete: Cascade)
+  answers     Answer[]
+  
+  @@map("attempts")
+}
+
+model Answer {
+  id               String    @id @default(uuid())
+  attemptId        String    @map("attempt_id")
+  questionId       String    @map("question_id")
+  selectedOptionId String?   @map("selected_option_id")
+  isCorrect        Boolean   @default(false) @map("is_correct")
+  answeredAt       DateTime  @map("answered_at")
+  
+  attempt          Attempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question         Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   Option?   @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  
+  @@unique([attemptId, questionId])
+  @@map("answers")
+}

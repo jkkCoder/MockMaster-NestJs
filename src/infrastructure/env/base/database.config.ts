@@ -7,10 +7,10 @@ const databaseConfigSchema = z.object({
     .transform((val: string) => parseInt(val, 10))
     .pipe(z.number().int().min(1).max(65535))
     .default('3306'),
-  username: z.string().min(1).default('mockmaster'),
-  password: z.string().min(1).default('mockmaster'),
-  database: z.string().min(1).default('mockmaster'),
-  testDatabase: z.string().min(1).default('mockmaster_test'),
+  username: z.string().min(1).default('root'),
+  password: z.string().min(1).default('0.0.0.0.'),
+  database: z.string().min(1).default('mock_master'),
+  testDatabase: z.string().min(1).default('mock_master_test'),
 });
 
 export type DatabaseConfig = z.infer<typeof databaseConfigSchema>;

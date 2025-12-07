@@ -9,10 +9,10 @@ const databaseConfigSchema = zod_1.z.object({
         .transform((val) => parseInt(val, 10))
         .pipe(zod_1.z.number().int().min(1).max(65535))
         .default('3306'),
-    username: zod_1.z.string().min(1).default('mockmaster'),
-    password: zod_1.z.string().min(1).default('mockmaster'),
-    database: zod_1.z.string().min(1).default('mockmaster'),
-    testDatabase: zod_1.z.string().min(1).default('mockmaster_test'),
+    username: zod_1.z.string().min(1).default('root'),
+    password: zod_1.z.string().min(1).default('0.0.0.0.'),
+    database: zod_1.z.string().min(1).default('mock_master'),
+    testDatabase: zod_1.z.string().min(1).default('mock_master_test'),
 });
 const databaseConfig = () => {
     return databaseConfigSchema.parse({

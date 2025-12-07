@@ -7,18 +7,18 @@ declare const databaseConfigSchema: z.ZodObject<{
     database: z.ZodDefault<z.ZodString>;
     testDatabase: z.ZodDefault<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    database: string;
-    port: number;
     host: string;
+    port: number;
     username: string;
     password: string;
+    database: string;
     testDatabase: string;
 }, {
-    database?: string | undefined;
-    port?: string | undefined;
     host?: string | undefined;
+    port?: string | undefined;
     username?: string | undefined;
     password?: string | undefined;
+    database?: string | undefined;
     testDatabase?: string | undefined;
 }>;
 export type DatabaseConfig = z.infer<typeof databaseConfigSchema>;

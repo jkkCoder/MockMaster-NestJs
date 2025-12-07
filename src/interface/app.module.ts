@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ObservabilityModule } from '@infrastructure/observability/observability.module';
+import { DatabaseModule } from '@infrastructure/database/database.module';
 import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
 import { HttpInterceptor } from './shared/interceptors/http.interceptor';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
@@ -10,6 +11,7 @@ import { AuthGuard } from './shared/guards/auth.guard';
 
 @Module({
   imports: [
+    DatabaseModule,
     ObservabilityModule,
   ],
   controllers: [],

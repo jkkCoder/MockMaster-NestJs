@@ -1,6 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as express from 'express';
 import { AppModule } from './interface/app.module';
 import { appConfig } from '@infrastructure/env/base/app.config';
 import { httpConfig } from '@infrastructure/env/base/http.config';
@@ -13,8 +16,17 @@ async function bootstrap() {
   const httpConf = httpConfig();
   const apiConf = apiConfig();
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new AppLoggerService(),
+  });
+
+  // Increase body size limit to 10MB (adjust as needed)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+  // Serve static files from uploads directory
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+    prefix: '/uploads/',
   });
 
   // CORS configuration

@@ -14,14 +14,22 @@ import { PasswordHasherPort, PASSWORD_HASHER_PORT } from '@application/shared/po
 import { JwtService } from '@infrastructure/services/jwt.service';
 import { AppLoggerService } from '@infrastructure/observability/logger.service';
 import { LoginUseCase } from '@application/auth/use-cases/login.user-case';
+import { MockInfrastructureModule } from '@infrastructure/modules/mock.module';
+import { MockController } from './mock/controllers/mock.controller';
+import { MockRepositoryPort, MOCK_REPOSITORY_PORT } from '@application/mock/ports/mock-repository.port';
+import { CreateMockUseCase } from '@application/mock/use-cases/create-mock.user-case';
 
 @Module({
   imports: [
     DatabaseModule,
     ObservabilityModule,
     AuthInfrastructureModule,
+    MockInfrastructureModule, // Add this
   ],
-  controllers: [AuthController],
+  controllers: [
+    AuthController,
+    MockController, // Add this
+  ],
   providers: [
     // Auth use cases
     {
@@ -64,6 +72,16 @@ import { LoginUseCase } from '@application/auth/use-cases/login.user-case';
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
+    },
+    {
+      provide: CreateMockUseCase,
+      useFactory: (
+        mockRepository: MockRepositoryPort,
+        logger: AppLoggerService,
+      ) => {
+        return new CreateMockUseCase(mockRepository, logger);
+      },
+      inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
     },
   ],
 })

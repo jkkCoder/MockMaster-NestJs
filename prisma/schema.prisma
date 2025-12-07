@@ -55,6 +55,7 @@ model Question {
   id            String    @id @default(uuid())
   mockId        String    @map("mock_id")
   mockSectionId String?   @map("mock_section_id")
+  text          String?   @db.Text
   imageUrl      String?   @map("image_url") @db.VarChar(500)
   marks         Float     @default(1)
   negativeMark  Float     @default(0) @map("negative_mark")

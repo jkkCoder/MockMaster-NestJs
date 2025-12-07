@@ -40,6 +40,7 @@ CREATE TABLE `questions` (
     `id` VARCHAR(191) NOT NULL,
     `mock_id` VARCHAR(191) NOT NULL,
     `mock_section_id` VARCHAR(191) NULL,
+    `text` TEXT NULL,
     `image_url` VARCHAR(500) NULL,
     `marks` DOUBLE NOT NULL DEFAULT 1,
     `negative_mark` DOUBLE NOT NULL DEFAULT 0,

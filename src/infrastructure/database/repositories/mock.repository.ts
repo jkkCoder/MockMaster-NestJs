@@ -6,6 +6,7 @@ import {
   CreateSectionData,
   CreateQuestionData,
   CreateOptionData,
+  MockWithSections,
 } from '@application/mock/ports/mock-repository.port';
 
 @Injectable()
@@ -61,5 +62,28 @@ export class MockRepository implements MockRepositoryPort {
       },
     });
     return { id: option.id };
+  }
+
+  async fetchAllMocks(): Promise<MockWithSections[]> {
+    return this.prisma.mock.findMany({
+      where: {
+        isActive: true,
+      },
+      include: {
+        sections: {
+          orderBy: {
+            sortOrder: 'asc',
+          },
+          select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 }

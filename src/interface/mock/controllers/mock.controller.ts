@@ -1,6 +1,7 @@
 import {
     Controller,
     Post,
+    Get,
     Body,
     HttpCode,
     HttpStatus,
@@ -17,6 +18,8 @@ import {
   import { AppLoggerService } from '@infrastructure/observability/logger.service';
   import { CreateMockUseCase } from '@application/mock/use-cases/create-mock.user-case';
   import { MockResponseDto } from '@application/mock/dto/create-mock-response.dto';
+import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-case';
+import { FetchMocksResponseDto } from '@application/mock/dto/fetch-mock-response.dto';
   
   @ApiTags('admin')
   @ApiBearerAuth('JWT-auth')
@@ -24,6 +27,7 @@ import {
   export class MockController {
     constructor(
       private readonly createMockUseCase: CreateMockUseCase,
+      private readonly fetchMocksUseCase: FetchMocksUseCase,
       private readonly logger: AppLoggerService,
     ) {}
   
@@ -74,6 +78,51 @@ import {
   
         throw new HttpException(
           error instanceof Error ? error.message : 'Failed to create mock',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    @Get('fetch-mocks')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+      summary: 'Fetch all mocks with sections',
+      description: 'Retrieves all active mocks with their sections for viewing purposes.',
+    })
+    @ApiResponse({
+      status: 200,
+      description: 'Mocks fetched successfully',
+      type: FetchMocksResponseDto,
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized - authentication required',
+    })
+    async fetchMocks(): Promise<FetchMocksResponseDto> {
+      this.logger.log('Received fetch mocks request', 'MockController');
+
+      try {
+        const result = await this.fetchMocksUseCase.execute();
+        this.logger.log('Mocks fetched successfully', 'MockController', {
+          count: result.mocks.length,
+        });
+        return result;
+      } catch (error) {
+        this.logger.error(
+          'Failed to fetch mocks',
+          error instanceof Error ? error.stack : undefined,
+          'MockController',
+          {
+            error: error instanceof Error ? error.message : 'unknown',
+          },
+        );
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        throw new HttpException(
+          error instanceof Error ? error.message : 'Failed to fetch mocks',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }

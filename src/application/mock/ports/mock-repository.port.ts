@@ -32,6 +32,20 @@ export interface CreateOptionData {
   sortOrder: number;
 }
 
+export interface MockWithSections {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: number;
+  isActive: boolean;
+  createdAt: Date;
+  sections: {
+    id: string;
+    name: string;
+    sortOrder: number;
+  }[];
+}
+
 export const MOCK_REPOSITORY_PORT = Symbol('MOCK_REPOSITORY_PORT');
 
 export interface MockRepositoryPort {
@@ -39,4 +53,5 @@ export interface MockRepositoryPort {
   createSection(data: CreateSectionData): Promise<{ id: string }>;
   createQuestion(data: CreateQuestionData): Promise<{ id: string }>;
   createOption(data: CreateOptionData): Promise<{ id: string }>;
+  fetchAllMocks(): Promise<MockWithSections[]>;
 }

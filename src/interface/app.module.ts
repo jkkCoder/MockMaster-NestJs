@@ -20,6 +20,7 @@ import { MockRepositoryPort, MOCK_REPOSITORY_PORT } from '@application/mock/port
 import { CreateMockUseCase } from '@application/mock/use-cases/create-mock.user-case';
 import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-case';
 import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.use-case';
+import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt.use-case';
 
 @Module({
   imports: [
@@ -102,6 +103,16 @@ import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.u
         logger: AppLoggerService,
       ) => {
         return new StartAttemptUseCase(mockRepository, logger);
+      },
+      inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
+    },
+    {
+      provide: SubmitAttemptUseCase,
+      useFactory: (
+        mockRepository: MockRepositoryPort,
+        logger: AppLoggerService,
+      ) => {
+        return new SubmitAttemptUseCase(mockRepository, logger);
       },
       inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
     },

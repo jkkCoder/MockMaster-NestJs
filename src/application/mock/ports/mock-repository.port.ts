@@ -79,6 +79,48 @@ export interface MockWithQuestionsAndOptions {
   }[];
 }
 
+export interface AttemptWithMock {
+  id: string;
+  userId: string;
+  mockId: string;
+  startedAt: Date;
+  submittedAt: Date | null;
+  timeTaken: number | null;
+  score: number | null;
+  percentage: number | null;
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'AUTO_SUBMITTED';
+  mock: {
+    id: string;
+    title: string;
+    description: string | null;
+    duration: number;
+  };
+}
+
+export interface QuestionWithCorrectOption {
+  id: string;
+  mockSectionId: string | null;
+  marks: number;
+  negativeMark: number;
+  correctOptionId: string | null;
+}
+
+export interface CreateAnswerData {
+  attemptId: string;
+  questionId: string;
+  selectedOptionId: string | null;
+  isCorrect: boolean;
+  answeredAt: Date;
+}
+
+export interface UpdateAttemptSubmissionData {
+  attemptId: string;
+  submittedAt: Date;
+  timeTaken: number;
+  score: number;
+  percentage: number;
+}
+
 export const MOCK_REPOSITORY_PORT = Symbol('MOCK_REPOSITORY_PORT');
 
 export interface MockRepositoryPort {
@@ -89,4 +131,9 @@ export interface MockRepositoryPort {
   fetchAllMocks(): Promise<MockWithSections[]>;
   createAttempt(data: CreateAttemptData): Promise<{ id: string; startedAt: Date }>;
   fetchMockWithQuestionsAndOptions(mockId: string): Promise<MockWithQuestionsAndOptions | null>;
+  fetchAttemptWithMock(attemptId: string, userId: string): Promise<AttemptWithMock | null>;
+  fetchAttemptById(attemptId: string): Promise<{ id: string; userId: string; status: string } | null>;
+  fetchQuestionsWithCorrectAnswers(mockId: string): Promise<QuestionWithCorrectOption[]>;
+  createAnswers(answers: CreateAnswerData[]): Promise<void>;
+  updateAttemptSubmission(data: UpdateAttemptSubmissionData): Promise<void>;
 }

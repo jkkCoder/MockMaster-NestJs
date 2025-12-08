@@ -9,6 +9,10 @@ import {
   MockWithSections,
   CreateAttemptData,
   MockWithQuestionsAndOptions,
+  AttemptWithMock,
+  QuestionWithCorrectOption,
+  CreateAnswerData,
+  UpdateAttemptSubmissionData,
 } from '@application/mock/ports/mock-repository.port';
 
 @Injectable()
@@ -166,5 +170,113 @@ export class MockRepository implements MockRepositoryPort {
         })),
       })),
     };
+  }
+
+  async fetchAttemptById(attemptId: string): Promise<{ id: string; userId: string; status: string } | null> {
+    const attempt = await this.prisma.attempt.findUnique({
+      where: { id: attemptId },
+      select: {
+        id: true,
+        userId: true,
+        status: true,
+      },
+    });
+
+    return attempt;
+  }
+
+  async fetchAttemptWithMock(attemptId: string, userId: string): Promise<AttemptWithMock | null> {
+    const attempt = await this.prisma.attempt.findFirst({
+      where: {
+        id: attemptId,
+        userId: userId,
+      },
+      include: {
+        mock: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            duration: true,
+          },
+        },
+      },
+    });
+
+    if (!attempt) {
+      return null;
+    }
+
+    return {
+      id: attempt.id,
+      userId: attempt.userId,
+      mockId: attempt.mockId,
+      startedAt: attempt.startedAt,
+      submittedAt: attempt.submittedAt,
+      timeTaken: attempt.timeTaken,
+      score: attempt.score,
+      percentage: attempt.percentage,
+      status: attempt.status,
+      mock: {
+        id: attempt.mock.id,
+        title: attempt.mock.title,
+        description: attempt.mock.description,
+        duration: attempt.mock.duration,
+      },
+    };
+  }
+
+  async fetchQuestionsWithCorrectAnswers(mockId: string): Promise<QuestionWithCorrectOption[]> {
+    const questions = await this.prisma.question.findMany({
+      where: {
+        mockId: mockId,
+      },
+      include: {
+        options: {
+          where: {
+            isCorrect: true,
+          },
+          select: {
+            id: true,
+          },
+          take: 1,
+        },
+      },
+    });
+
+    return questions.map((question) => ({
+      id: question.id,
+      mockSectionId: question.mockSectionId,
+      marks: question.marks,
+      negativeMark: question.negativeMark,
+      correctOptionId: question.options[0]?.id || null,
+    }));
+  }
+
+  async createAnswers(answers: CreateAnswerData[]): Promise<void> {
+    await this.prisma.answer.createMany({
+      data: answers.map((answer) => ({
+        attemptId: answer.attemptId,
+        questionId: answer.questionId,
+        selectedOptionId: answer.selectedOptionId,
+        isCorrect: answer.isCorrect,
+        answeredAt: answer.answeredAt,
+      })),
+    });
+  }
+
+  async updateAttemptSubmission(data: UpdateAttemptSubmissionData): Promise<void> {
+    await this.prisma.attempt.update({
+      where: {
+        id: data.attemptId,
+      },
+      data: {
+        submittedAt: data.submittedAt,
+        timeTaken: data.timeTaken,
+        score: data.score,
+        percentage: data.percentage,
+        status: 'SUBMITTED',
+      },
+    });
   }
 }

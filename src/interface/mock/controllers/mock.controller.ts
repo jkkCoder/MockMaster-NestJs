@@ -24,8 +24,11 @@ import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-c
 import { FetchMocksResponseDto } from '@application/mock/dto/fetch-mock-response.dto';
 import { StartAttemptDto } from '@application/mock/dto/start-attemp.dt';
 import { StartAttemptResponseDto } from '@application/mock/dto/start-attempt-response.dto';
+import { SubmitAttemptDto } from '@application/mock/dto/submit-attempt.dto';
+import { SubmitAttemptResponseDto } from '@application/mock/dto/submit-attempt-response.dto';
 import { AuthenticatedRequest } from '@interface/shared/guards/auth.guard';
 import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.use-case';
+import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt.use-case';
   
   @ApiTags('admin')
   @ApiBearerAuth('JWT-auth')
@@ -35,6 +38,7 @@ import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.u
       private readonly createMockUseCase: CreateMockUseCase,
       private readonly fetchMocksUseCase: FetchMocksUseCase,
       private readonly startAttemptUseCase: StartAttemptUseCase,
+      private readonly submitAttemptUseCase: SubmitAttemptUseCase,
       private readonly logger: AppLoggerService,
     ) {}
   
@@ -203,6 +207,87 @@ import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.u
 
         throw new HttpException(
           error instanceof Error ? error.message : 'Failed to start attempt',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    @Post('submit-attempt')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+      summary: 'Submit an attempt with answers',
+      description: 'Submits answers for an attempt, calculates scores section-wise and overall, and updates the attempt status.',
+    })
+    @ApiBody({ type: SubmitAttemptDto })
+    @ApiResponse({
+      status: 200,
+      description: 'Attempt submitted successfully',
+      type: SubmitAttemptResponseDto,
+    })
+    @ApiResponse({
+      status: 400,
+      description: 'Bad request - validation failed, invalid question IDs, or duplicate question IDs',
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized - authentication required',
+    })
+    @ApiResponse({
+      status: 403,
+      description: 'Forbidden - attempt does not belong to user',
+    })
+    @ApiResponse({
+      status: 404,
+      description: 'Attempt not found',
+    })
+    @ApiResponse({
+      status: 409,
+      description: 'Conflict - attempt already submitted',
+    })
+    async submitAttempt(
+      @Body() submitAttemptDto: SubmitAttemptDto,
+      @Request() req: AuthenticatedRequest,
+    ): Promise<SubmitAttemptResponseDto> {
+      this.logger.log('Received submit attempt request', 'MockController', {
+        attemptId: submitAttemptDto.attemptId,
+        answersCount: submitAttemptDto.answers.length,
+        hasUser: !!req.user,
+        userId: req.user?.userId,
+      });
+
+      if (!req.user?.userId) {
+        this.logger.warn('User not authenticated in submit attempt', 'MockController', {
+          attemptId: submitAttemptDto.attemptId,
+          hasAuthHeader: !!req.headers.authorization,
+        });
+        throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
+      }
+
+      try {
+        const result = await this.submitAttemptUseCase.execute(submitAttemptDto, req.user.userId);
+        this.logger.log('Attempt submitted successfully', 'MockController', {
+          attemptId: result.attemptId,
+          score: result.score,
+          percentage: result.percentage,
+        });
+        return result;
+      } catch (error) {
+        this.logger.error(
+          'Failed to submit attempt',
+          error instanceof Error ? error.stack : undefined,
+          'MockController',
+          {
+            error: error instanceof Error ? error.message : 'unknown',
+            attemptId: submitAttemptDto.attemptId,
+          },
+        );
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        throw new HttpException(
+          error instanceof Error ? error.message : 'Failed to submit attempt',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }

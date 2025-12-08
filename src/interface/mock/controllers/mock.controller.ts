@@ -6,6 +6,8 @@ import {
     HttpCode,
     HttpStatus,
     HttpException,
+    UnauthorizedException,
+    Request,
   } from '@nestjs/common';
   import {
     ApiTags,
@@ -20,6 +22,10 @@ import {
   import { MockResponseDto } from '@application/mock/dto/create-mock-response.dto';
 import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-case';
 import { FetchMocksResponseDto } from '@application/mock/dto/fetch-mock-response.dto';
+import { StartAttemptDto } from '@application/mock/dto/start-attemp.dt';
+import { StartAttemptResponseDto } from '@application/mock/dto/start-attempt-response.dto';
+import { AuthenticatedRequest } from '@interface/shared/guards/auth.guard';
+import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.use-case';
   
   @ApiTags('admin')
   @ApiBearerAuth('JWT-auth')
@@ -28,6 +34,7 @@ import { FetchMocksResponseDto } from '@application/mock/dto/fetch-mock-response
     constructor(
       private readonly createMockUseCase: CreateMockUseCase,
       private readonly fetchMocksUseCase: FetchMocksUseCase,
+      private readonly startAttemptUseCase: StartAttemptUseCase,
       private readonly logger: AppLoggerService,
     ) {}
   
@@ -123,6 +130,79 @@ import { FetchMocksResponseDto } from '@application/mock/dto/fetch-mock-response
 
         throw new HttpException(
           error instanceof Error ? error.message : 'Failed to fetch mocks',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+
+    @Post('start-attempt')
+    @HttpCode(HttpStatus.CREATED)
+    @ApiOperation({
+      summary: 'Start a new attempt for a mock test',
+      description: 'Creates an attempt record and returns all questions with options (excluding correct answers) for the test.',
+    })
+    @ApiBody({ type: StartAttemptDto })
+    @ApiResponse({
+      status: 201,
+      description: 'Attempt started successfully',
+      type: StartAttemptResponseDto,
+    })
+    @ApiResponse({
+      status: 400,
+      description: 'Bad request - validation failed or mock has no sections',
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized - authentication required',
+    })
+    @ApiResponse({
+      status: 404,
+      description: 'Mock not found',
+    })
+    async startAttempt(
+      @Body() startAttemptDto: StartAttemptDto,
+      @Request() req: AuthenticatedRequest,
+    ): Promise<StartAttemptResponseDto> {
+      this.logger.log('Received start attempt request', 'MockController', {
+        mockId: startAttemptDto.mockId,
+        hasUser: !!req.user,
+        userId: req.user?.userId,
+        authHeader: req.headers.authorization ? 'present' : 'missing',
+      });
+
+      if (!req.user?.userId) {
+        this.logger.warn('User not authenticated in start attempt', 'MockController', {
+          mockId: startAttemptDto.mockId,
+          hasAuthHeader: !!req.headers.authorization,
+        });
+        throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
+      }
+
+      try {
+        const result = await this.startAttemptUseCase.execute(startAttemptDto, req.user.userId);
+        this.logger.log('Attempt started successfully', 'MockController', {
+          attemptId: result.attemptId,
+          mockId: result.mockId,
+        });
+        return result;
+      } catch (error) {
+        this.logger.error(
+          'Failed to start attempt',
+          error instanceof Error ? error.stack : undefined,
+          'MockController',
+          {
+            error: error instanceof Error ? error.message : 'unknown',
+            mockId: startAttemptDto.mockId,
+          },
+        );
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        throw new HttpException(
+          error instanceof Error ? error.message : 'Failed to start attempt',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }

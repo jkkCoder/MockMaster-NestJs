@@ -54,14 +54,36 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const token = this.extractTokenFromHeader(request);
+
+    // If auth is disabled, still try to validate token if provided (for development)
+    // This allows endpoints that need req.user to work even when auth is disabled
     if (!this.config.enableAuth) {
+      if (token) {
+        try {
+          const payload = jwt.verify(token, this.config.jwtSecret, {
+            algorithms: [this.config.jwtAlgorithm],
+          }) as JwtPayload;
+          request.user = payload;
+          this.logger.debug('Token validated (auth disabled)', 'AuthGuard', {
+            userId: payload.userId,
+            email: payload.email,
+            path: request.path,
+          });
+        } catch (error) {
+          // If token is invalid, just log and continue (auth is disabled)
+          this.logger.debug('Invalid token provided but auth is disabled', 'AuthGuard', {
+            path: request.path,
+            error: error instanceof Error ? error.message : 'unknown',
+          });
+        }
+      }
       // Auth is disabled, allow all requests
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const token = this.extractTokenFromHeader(request);
-
+    // Auth is enabled - require valid token
     if (!token) {
       this.logger.warn('Authentication failed - no token provided', 'AuthGuard', {
         path: request.path,

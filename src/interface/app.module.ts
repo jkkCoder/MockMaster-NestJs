@@ -19,6 +19,7 @@ import { MockController } from './mock/controllers/mock.controller';
 import { MockRepositoryPort, MOCK_REPOSITORY_PORT } from '@application/mock/ports/mock-repository.port';
 import { CreateMockUseCase } from '@application/mock/use-cases/create-mock.user-case';
 import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-case';
+import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.use-case';
 
 @Module({
   imports: [
@@ -91,6 +92,16 @@ import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-c
         logger: AppLoggerService,
       ) => {
         return new FetchMocksUseCase(mockRepository, logger);
+      },
+      inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
+    },
+    {
+      provide: StartAttemptUseCase,
+      useFactory: (
+        mockRepository: MockRepositoryPort,
+        logger: AppLoggerService,
+      ) => {
+        return new StartAttemptUseCase(mockRepository, logger);
       },
       inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
     },

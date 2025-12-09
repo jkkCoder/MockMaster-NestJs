@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { PasswordHasherPort } from '@application/shared/ports/password-hasher.port';
 import { AppLoggerService } from '@infrastructure/observability/logger.service';
 

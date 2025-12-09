@@ -29,7 +29,8 @@
     "sonar": "sonar-scanner",
     "snyk:test": "snyk test",
     "snyk:monitor": "snyk monitor",
-    "snyk:test:ci": "snyk test --severity-threshold=high"
+    "snyk:test:ci": "snyk test --severity-threshold=high",
+    "postinstall": "npm rebuild bcrypt --build-from-source"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

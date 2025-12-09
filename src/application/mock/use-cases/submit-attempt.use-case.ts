@@ -177,8 +177,12 @@ export class SubmitAttemptUseCase {
     let correctAnswers = 0;
     let incorrectAnswers = 0;
 
-    // Create a map of answered questionIds for quick lookup
-    const answeredQuestionIds = new Set(dto.answers.map((a) => a.questionId));
+    // Create a map of answered questionIds for quick lookup (only questions with selectedOptionId)
+    const answeredQuestionIds = new Set(
+      dto.answers
+        .filter((a) => a.selectedOptionId !== null && a.selectedOptionId !== undefined)
+        .map((a) => a.questionId)
+    );
 
     for (const [sectionId, sectionData] of sectionMap.entries()) {
       // Get all questions for this section
@@ -187,11 +191,11 @@ export class SubmitAttemptUseCase {
       );
 
       const sectionTotalMarks = sectionQuestions.reduce((sum, q) => sum + q.marks, 0);
-      const sectionAnswered = sectionData.answers.length;
-      const sectionCorrect = sectionData.answers.filter((a) => a.isCorrect).length;
-      const sectionIncorrect = sectionData.answers.filter(
-        (a) => a.selectedOptionId && !a.isCorrect
-      ).length;
+      // Only count answers where selectedOptionId is not null
+      const answeredAnswers = sectionData.answers.filter((a) => a.selectedOptionId !== null && a.selectedOptionId !== undefined);
+      const sectionAnswered = answeredAnswers.length;
+      const sectionCorrect = answeredAnswers.filter((a) => a.isCorrect).length;
+      const sectionIncorrect = answeredAnswers.filter((a) => !a.isCorrect).length;
       const sectionUnanswered = sectionQuestions.length - sectionAnswered;
       const sectionObtainedMarks = sectionData.answers.reduce((sum, a) => sum + a.marks, 0);
       const sectionPercentage = sectionTotalMarks > 0
@@ -217,12 +221,13 @@ export class SubmitAttemptUseCase {
 
     // Calculate overall statistics
     for (const question of questions) {
-      if (answeredQuestionIds.has(question.id)) {
+      const answer = answerData.find((a) => a.questionId === question.id);
+      // Only count as answered if selectedOptionId is not null
+      if (answer && answer.selectedOptionId !== null && answer.selectedOptionId !== undefined) {
         answeredQuestions++;
-        const answer = answerData.find((a) => a.questionId === question.id);
-        if (answer?.isCorrect) {
+        if (answer.isCorrect) {
           correctAnswers++;
-        } else if (answer?.selectedOptionId) {
+        } else {
           incorrectAnswers++;
         }
       }

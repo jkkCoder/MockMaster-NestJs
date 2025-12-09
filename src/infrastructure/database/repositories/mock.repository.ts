@@ -9,6 +9,7 @@ import {
   MockWithSections,
   CreateAttemptData,
   MockWithQuestionsAndOptions,
+  MockWithQuestionsAndOptionsWithAnswers,
   AttemptWithMock,
   QuestionWithCorrectOption,
   CreateAnswerData,
@@ -166,6 +167,74 @@ export class MockRepository implements MockRepositoryPort {
             text: option.text,
             imageUrl: option.imageUrl,
             sortOrder: option.sortOrder,
+          })),
+        })),
+      })),
+    };
+  }
+
+  async fetchMockWithQuestionsAndOptionsWithAnswers(mockId: string): Promise<MockWithQuestionsAndOptionsWithAnswers | null> {
+    const mock = await this.prisma.mock.findUnique({
+      where: { id: mockId },
+      include: {
+        sections: {
+          orderBy: {
+            sortOrder: 'asc',
+          },
+          include: {
+            questions: {
+              orderBy: {
+                sortOrder: 'asc',
+              },
+              include: {
+                options: {
+                  orderBy: {
+                    sortOrder: 'asc',
+                  },
+                  select: {
+                    id: true,
+                    label: true,
+                    text: true,
+                    imageUrl: true,
+                    sortOrder: true,
+                    isCorrect: true, // Include isCorrect for answers view
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!mock) {
+      return null;
+    }
+
+    return {
+      id: mock.id,
+      title: mock.title,
+      description: mock.description,
+      duration: mock.duration,
+      sections: mock.sections.map((section) => ({
+        id: section.id,
+        name: section.name,
+        sortOrder: section.sortOrder,
+        questions: section.questions.map((question) => ({
+          id: question.id,
+          text: question.text,
+          imageUrl: question.imageUrl,
+          marks: question.marks,
+          negativeMark: question.negativeMark,
+          sortOrder: question.sortOrder,
+          mockSectionId: question.mockSectionId,
+          options: question.options.map((option) => ({
+            id: option.id,
+            label: option.label,
+            text: option.text,
+            imageUrl: option.imageUrl,
+            sortOrder: option.sortOrder,
+            isCorrect: option.isCorrect,
           })),
         })),
       })),

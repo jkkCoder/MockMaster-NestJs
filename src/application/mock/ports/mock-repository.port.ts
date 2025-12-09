@@ -79,6 +79,35 @@ export interface MockWithQuestionsAndOptions {
   }[];
 }
 
+export interface MockWithQuestionsAndOptionsWithAnswers {
+  id: string;
+  title: string;
+  description: string | null;
+  duration: number;
+  sections: {
+    id: string;
+    name: string;
+    sortOrder: number;
+    questions: {
+      id: string;
+      text: string | null;
+      imageUrl: string | null;
+      marks: number;
+      negativeMark: number;
+      sortOrder: number;
+      mockSectionId: string | null;
+      options: {
+        id: string;
+        label: string;
+        text: string | null;
+        imageUrl: string | null;
+        sortOrder: number;
+        isCorrect: boolean;
+      }[];
+    }[];
+  }[];
+}
+
 export interface AttemptWithMock {
   id: string;
   userId: string;
@@ -131,6 +160,7 @@ export interface MockRepositoryPort {
   fetchAllMocks(): Promise<MockWithSections[]>;
   createAttempt(data: CreateAttemptData): Promise<{ id: string; startedAt: Date }>;
   fetchMockWithQuestionsAndOptions(mockId: string): Promise<MockWithQuestionsAndOptions | null>;
+  fetchMockWithQuestionsAndOptionsWithAnswers(mockId: string): Promise<MockWithQuestionsAndOptionsWithAnswers | null>;
   fetchAttemptWithMock(attemptId: string, userId: string): Promise<AttemptWithMock | null>;
   fetchAttemptById(attemptId: string): Promise<{ id: string; userId: string; status: string } | null>;
   fetchQuestionsWithCorrectAnswers(mockId: string): Promise<QuestionWithCorrectOption[]>;

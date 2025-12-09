@@ -3,6 +3,7 @@ import {
     Post,
     Get,
     Body,
+    Param,
     HttpCode,
     HttpStatus,
     HttpException,
@@ -29,6 +30,8 @@ import { SubmitAttemptResponseDto } from '@application/mock/dto/submit-attempt-r
 import { AuthenticatedRequest } from '@interface/shared/guards/auth.guard';
 import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.use-case';
 import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt.use-case';
+import { ViewAnswersUseCase } from '@application/mock/use-cases/view-answers.use-case';
+import { ViewAnswersResponseDto } from '@application/mock/dto/view-answers-response.dto';
   
   @ApiTags('admin')
   @ApiBearerAuth('JWT-auth')
@@ -39,6 +42,7 @@ import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt
       private readonly fetchMocksUseCase: FetchMocksUseCase,
       private readonly startAttemptUseCase: StartAttemptUseCase,
       private readonly submitAttemptUseCase: SubmitAttemptUseCase,
+      private readonly viewAnswersUseCase: ViewAnswersUseCase,
       private readonly logger: AppLoggerService,
     ) {}
   
@@ -288,6 +292,76 @@ import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt
 
         throw new HttpException(
           error instanceof Error ? error.message : 'Failed to submit attempt',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    @Get('view-answers/:mockId')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+      summary: 'View answers for a mock test',
+      description: 'Returns all questions with options and marks correct answers. Does not create an attempt.',
+    })
+    @ApiResponse({
+      status: 200,
+      description: 'Answers retrieved successfully',
+      type: ViewAnswersResponseDto,
+    })
+    @ApiResponse({
+      status: 400,
+      description: 'Bad request - mock has no sections',
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized - authentication required',
+    })
+    @ApiResponse({
+      status: 404,
+      description: 'Mock not found',
+    })
+    async viewAnswers(
+      @Param('mockId') mockId: string,
+      @Request() req: AuthenticatedRequest,
+    ): Promise<ViewAnswersResponseDto> {
+      this.logger.log('Received view answers request', 'MockController', {
+        mockId,
+        hasUser: !!req.user,
+        userId: req.user?.userId,
+      });
+
+      if (!req.user?.userId) {
+        this.logger.warn('User not authenticated in view answers', 'MockController', {
+          mockId,
+          hasAuthHeader: !!req.headers.authorization,
+        });
+        throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
+      }
+
+      try {
+        const result = await this.viewAnswersUseCase.execute(mockId);
+        this.logger.log('Answers retrieved successfully', 'MockController', {
+          mockId: result.mockId,
+          sectionsCount: result.sections.length,
+        });
+        return result;
+      } catch (error) {
+        this.logger.error(
+          'Failed to view answers',
+          error instanceof Error ? error.stack : undefined,
+          'MockController',
+          {
+            error: error instanceof Error ? error.message : 'unknown',
+            mockId,
+          },
+        );
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        throw new HttpException(
+          error instanceof Error ? error.message : 'Failed to view answers',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }

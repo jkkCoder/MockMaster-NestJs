@@ -150,6 +150,94 @@ export interface UpdateAttemptSubmissionData {
   percentage: number;
 }
 
+export interface UserAttemptSummary {
+  id: string;
+  mockId: string;
+  mockTitle: string;
+  startedAt: Date;
+  submittedAt: Date | null;
+  score: number | null;
+  percentage: number | null;
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'AUTO_SUBMITTED';
+  totalMarks: number;
+  obtainedMarks: number;
+  totalQuestions: number;
+  answeredQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  unansweredQuestions: number;
+  sectionWiseResults: {
+    sectionId: string;
+    sectionName: string;
+    totalQuestions: number;
+    answeredQuestions: number;
+    correctAnswers: number;
+    incorrectAnswers: number;
+    unansweredQuestions: number;
+    totalMarks: number;
+    obtainedMarks: number;
+    percentage: number;
+  }[];
+}
+
+export interface AttemptWithAnswers {
+  attemptId: string;
+  mockId: string;
+  title: string;
+  description: string | null;
+  duration: number;
+  startedAt: Date;
+  submittedAt: Date | null;
+  timeTaken: number | null;
+  score: number | null;
+  percentage: number | null;
+  status: 'IN_PROGRESS' | 'SUBMITTED' | 'AUTO_SUBMITTED';
+  totalMarks: number;
+  obtainedMarks: number;
+  totalQuestions: number;
+  answeredQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  unansweredQuestions: number;
+  sections: {
+    id: string;
+    name: string;
+    sortOrder: number;
+    questions: {
+      id: string;
+      text: string | null;
+      imageUrl: string | null;
+      marks: number;
+      negativeMark: number;
+      sortOrder: number;
+      mockSectionId: string | null;
+      userSelectedOptionId: string | null;
+      correctOptionId: string | null;
+      isCorrect: boolean;
+      options: {
+        id: string;
+        label: string;
+        text: string | null;
+        imageUrl: string | null;
+        sortOrder: number;
+        isCorrect: boolean;
+      }[];
+    }[];
+  }[];
+  sectionWiseResults: {
+    sectionId: string;
+    sectionName: string;
+    totalQuestions: number;
+    answeredQuestions: number;
+    correctAnswers: number;
+    incorrectAnswers: number;
+    unansweredQuestions: number;
+    totalMarks: number;
+    obtainedMarks: number;
+    percentage: number;
+  }[];
+}
+
 export const MOCK_REPOSITORY_PORT = Symbol('MOCK_REPOSITORY_PORT');
 
 export interface MockRepositoryPort {
@@ -166,4 +254,6 @@ export interface MockRepositoryPort {
   fetchQuestionsWithCorrectAnswers(mockId: string): Promise<QuestionWithCorrectOption[]>;
   createAnswers(answers: CreateAnswerData[]): Promise<void>;
   updateAttemptSubmission(data: UpdateAttemptSubmissionData): Promise<void>;
+  fetchUserAttempts(userId: string): Promise<UserAttemptSummary[]>;
+  fetchAttemptWithAnswers(attemptId: string, userId: string): Promise<AttemptWithAnswers | null>;
 }

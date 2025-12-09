@@ -22,6 +22,8 @@ import { FetchMocksUseCase } from '@application/mock/use-cases/fetch-mock.user-c
 import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.use-case';
 import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt.use-case';
 import { ViewAnswersUseCase } from '@application/mock/use-cases/view-answers.use-case';
+import { FetchUserAttemptsUseCase } from '@application/mock/use-cases/fetch-user-attempts.use-case';
+import { FetchAttemptDetailsUseCase } from '@application/mock/use-cases/fetch-attempt-details.use-case';
 
 @Module({
   imports: [
@@ -124,6 +126,26 @@ import { ViewAnswersUseCase } from '@application/mock/use-cases/view-answers.use
         logger: AppLoggerService,
       ) => {
         return new ViewAnswersUseCase(mockRepository, logger);
+      },
+      inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
+    },
+    {
+      provide: FetchUserAttemptsUseCase,
+      useFactory: (
+        mockRepository: MockRepositoryPort,
+        logger: AppLoggerService,
+      ) => {
+        return new FetchUserAttemptsUseCase(mockRepository, logger);
+      },
+      inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
+    },
+    {
+      provide: FetchAttemptDetailsUseCase,
+      useFactory: (
+        mockRepository: MockRepositoryPort,
+        logger: AppLoggerService,
+      ) => {
+        return new FetchAttemptDetailsUseCase(mockRepository, logger);
       },
       inject: [MOCK_REPOSITORY_PORT, AppLoggerService],
     },

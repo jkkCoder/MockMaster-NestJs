@@ -32,6 +32,10 @@ import { StartAttemptUseCase } from '@application/mock/use-cases/start-attempt.u
 import { SubmitAttemptUseCase } from '@application/mock/use-cases/submit-attempt.use-case';
 import { ViewAnswersUseCase } from '@application/mock/use-cases/view-answers.use-case';
 import { ViewAnswersResponseDto } from '@application/mock/dto/view-answers-response.dto';
+import { FetchUserAttemptsUseCase } from '@application/mock/use-cases/fetch-user-attempts.use-case';
+import { FetchAttemptDetailsUseCase } from '@application/mock/use-cases/fetch-attempt-details.use-case';
+import { UserAttemptsResponseDto } from '@application/mock/dto/user-attempts-response.dto';
+import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details-response.dto';
   
   @ApiTags('admin')
   @ApiBearerAuth('JWT-auth')
@@ -43,6 +47,8 @@ import { ViewAnswersResponseDto } from '@application/mock/dto/view-answers-respo
       private readonly startAttemptUseCase: StartAttemptUseCase,
       private readonly submitAttemptUseCase: SubmitAttemptUseCase,
       private readonly viewAnswersUseCase: ViewAnswersUseCase,
+      private readonly fetchUserAttemptsUseCase: FetchUserAttemptsUseCase,
+      private readonly fetchAttemptDetailsUseCase: FetchAttemptDetailsUseCase,
       private readonly logger: AppLoggerService,
     ) {}
   
@@ -362,6 +368,132 @@ import { ViewAnswersResponseDto } from '@application/mock/dto/view-answers-respo
 
         throw new HttpException(
           error instanceof Error ? error.message : 'Failed to view answers',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    @Get('my-attempts')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+      summary: 'Get all attempts for the authenticated user',
+      description: 'Returns a list of all submitted attempts with summary information including scores and section-wise results.',
+    })
+    @ApiResponse({
+      status: 200,
+      description: 'Attempts retrieved successfully',
+      type: UserAttemptsResponseDto,
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized - authentication required',
+    })
+    async getMyAttempts(
+      @Request() req: AuthenticatedRequest,
+    ): Promise<UserAttemptsResponseDto> {
+      this.logger.log('Received get my attempts request', 'MockController', {
+        hasUser: !!req.user,
+        userId: req.user?.userId,
+      });
+
+      if (!req.user?.userId) {
+        this.logger.warn('User not authenticated in get my attempts', 'MockController', {
+          hasAuthHeader: !!req.headers.authorization,
+        });
+        throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
+      }
+
+      try {
+        const result = await this.fetchUserAttemptsUseCase.execute(req.user.userId);
+        this.logger.log('User attempts retrieved successfully', 'MockController', {
+          userId: req.user.userId,
+          attemptsCount: result.attempts.length,
+        });
+        return result;
+      } catch (error) {
+        this.logger.error(
+          'Failed to get user attempts',
+          error instanceof Error ? error.stack : undefined,
+          'MockController',
+          {
+            error: error instanceof Error ? error.message : 'unknown',
+            userId: req.user?.userId,
+          },
+        );
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        throw new HttpException(
+          error instanceof Error ? error.message : 'Failed to get user attempts',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+
+    @Get('attempt/:attemptId/details')
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+      summary: 'Get detailed attempt information with answers',
+      description: 'Returns detailed attempt information including all questions, user answers, and correct answers.',
+    })
+    @ApiResponse({
+      status: 200,
+      description: 'Attempt details retrieved successfully',
+      type: AttemptDetailsResponseDto,
+    })
+    @ApiResponse({
+      status: 401,
+      description: 'Unauthorized - authentication required',
+    })
+    @ApiResponse({
+      status: 404,
+      description: 'Attempt not found',
+    })
+    async getAttemptDetails(
+      @Param('attemptId') attemptId: string,
+      @Request() req: AuthenticatedRequest,
+    ): Promise<AttemptDetailsResponseDto> {
+      this.logger.log('Received get attempt details request', 'MockController', {
+        attemptId,
+        hasUser: !!req.user,
+        userId: req.user?.userId,
+      });
+
+      if (!req.user?.userId) {
+        this.logger.warn('User not authenticated in get attempt details', 'MockController', {
+          attemptId,
+          hasAuthHeader: !!req.headers.authorization,
+        });
+        throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
+      }
+
+      try {
+        const result = await this.fetchAttemptDetailsUseCase.execute(attemptId, req.user.userId);
+        this.logger.log('Attempt details retrieved successfully', 'MockController', {
+          attemptId,
+          userId: req.user.userId,
+        });
+        return result;
+      } catch (error) {
+        this.logger.error(
+          'Failed to get attempt details',
+          error instanceof Error ? error.stack : undefined,
+          'MockController',
+          {
+            error: error instanceof Error ? error.message : 'unknown',
+            attemptId,
+            userId: req.user?.userId,
+          },
+        );
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
+
+        throw new HttpException(
+          error instanceof Error ? error.message : 'Failed to get attempt details',
           HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }

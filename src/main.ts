@@ -31,9 +31,19 @@ async function bootstrap() {
 
   // CORS configuration
   if (httpConf.corsEnabled) {
+    // When credentials: true, cannot use '*' - must specify exact origins
+    let allowedOrigins: string[] | boolean;
+    if (httpConf.corsOrigin === '*') {
+      // For development: allow all origins but disable credentials
+      allowedOrigins = true;
+    } else {
+      // For production: specify exact origins and enable credentials
+      allowedOrigins = httpConf.corsOrigin.split(',').map(origin => origin.trim());
+    }
+
     app.enableCors({
-      origin: httpConf.corsOrigin === '*' ? true : httpConf.corsOrigin.split(','),
-      credentials: true,
+      origin: allowedOrigins,
+      credentials: httpConf.corsOrigin !== '*', // Only enable credentials when specific origins are set
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: [
         'Content-Type',

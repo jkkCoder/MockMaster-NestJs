@@ -13,8 +13,8 @@ export class JwtService {
   /**
    * Generate JWT access token
    */
-  sign(payload: { userId: string; email: string }): string {
-    this.logger.debug('Generating JWT token', 'JwtService', { userId: payload.userId });
+  sign(payload: { userId: string; email: string }, userName?: string): string {
+    this.logger.debug('Generating JWT token', 'JwtService', { userId: payload.userId }, userName || payload.userId);
     
     const token = jwt.sign(
       {
@@ -31,7 +31,7 @@ export class JwtService {
     this.logger.debug('JWT token generated successfully', 'JwtService', {
       userId: payload.userId,
       expiresIn: this.config.jwtExpiresIn,
-    });
+    }, userName || payload.userId);
 
     return token;
   }
@@ -39,8 +39,8 @@ export class JwtService {
   /**
    * Generate refresh token
    */
-  signRefreshToken(payload: { userId: string; email: string }): string {
-    this.logger.debug('Generating refresh token', 'JwtService', { userId: payload.userId });
+  signRefreshToken(payload: { userId: string; email: string }, userName?: string): string {
+    this.logger.debug('Generating refresh token', 'JwtService', { userId: payload.userId }, userName || payload.userId);
 
     const token = jwt.sign(
       {
@@ -61,7 +61,7 @@ export class JwtService {
   /**
    * Verify JWT access token
    */
-  verify(token: string): JwtPayload {
+  verify(token: string, userName?: string): JwtPayload {
     try {
       return jwt.verify(token, this.config.jwtSecret, {
         algorithms: [this.config.jwtAlgorithm as jwt.Algorithm],
@@ -69,7 +69,7 @@ export class JwtService {
     } catch (error) {
       this.logger.error('JWT verification failed', error instanceof Error ? error.stack : undefined, 'JwtService', {
         error: error instanceof Error ? error.message : 'unknown',
-      });
+      }, userName || 'SYSTEM');
       throw new Error('Invalid token');
     }
   }
@@ -77,7 +77,7 @@ export class JwtService {
   /**
    * Verify refresh token
    */
-  verifyRefreshToken(token: string): JwtPayload {
+  verifyRefreshToken(token: string, userName?: string): JwtPayload {
     try {
       const payload = jwt.verify(token, this.config.refreshTokenSecret, {
         algorithms: [this.config.jwtAlgorithm as jwt.Algorithm],
@@ -91,7 +91,7 @@ export class JwtService {
     } catch (error) {
       this.logger.error('Refresh token verification failed', error instanceof Error ? error.stack : undefined, 'JwtService', {
         error: error instanceof Error ? error.message : 'unknown',
-      });
+      }, userName || 'SYSTEM');
       throw new Error('Invalid refresh token');
     }
   }

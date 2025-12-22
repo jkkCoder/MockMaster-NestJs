@@ -11,11 +11,11 @@ export class CreateMockUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(dto: CreateMockDto): Promise<MockResponseDto> {
+  async execute(dto: CreateMockDto, userName?: string): Promise<MockResponseDto> {
     this.logger.log('Creating mock', 'CreateMockUseCase', {
       title: dto.mock.title,
       sectionsCount: dto.mock.sections.length,
-    });
+    }, userName || 'SYSTEM');
 
     // Create mock
     const mock = await this.mockRepository.createMock({
@@ -73,7 +73,7 @@ export class CreateMockUseCase {
       mockId: mock.id,
       sectionsCount: dto.mock.sections.length,
       questionsCount: totalQuestions,
-    });
+    }, userName || 'SYSTEM');
 
     return {
       id: mock.id,

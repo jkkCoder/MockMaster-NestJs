@@ -28,10 +28,13 @@ export class LoggingInterceptor implements NestInterceptor {
       tap(() => {
         const duration = (Date.now() - startTime) / 1000;
         const statusCode = response.statusCode;
+        const userName = (request as any).user?.userId || 'SYSTEM';
 
         this.logger.log(
           `${method} ${routePath} ${statusCode} - ${duration.toFixed(3)}s`,
           'HTTP',
+          undefined,
+          userName,
         );
 
         this.metrics.recordHttpRequest(method, routePath, statusCode, duration);
@@ -39,11 +42,14 @@ export class LoggingInterceptor implements NestInterceptor {
       catchError((error: any) => {
         const duration = (Date.now() - startTime) / 1000;
         const statusCode = error.status || 500;
+        const userName = (request as any).user?.userId || 'SYSTEM';
 
         this.logger.error(
           `${method} ${routePath} ${statusCode} - ${duration.toFixed(3)}s`,
           error.stack,
           'HTTP',
+          undefined,
+          userName,
         );
 
         this.metrics.recordHttpRequest(method, routePath, statusCode, duration);

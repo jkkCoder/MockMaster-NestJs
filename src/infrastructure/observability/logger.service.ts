@@ -17,24 +17,24 @@ export class AppLoggerService implements LoggerService {
   private readonly config = observabilityConfig();
   private readonly isProduction = process.env.NODE_ENV === 'production';
 
-  log(message: string, context?: string | LogContext, metadata?: LogContext): void {
-    this.writeLog('info', message, context, metadata);
+  log(message: string, context?: string | LogContext, metadata?: LogContext, userName?: string): void {
+    this.writeLog('info', message, context, metadata, userName);
   }
 
-  error(message: string, trace?: string, context?: string | LogContext, metadata?: LogContext): void {
-    this.writeLog('error', message, context, { ...metadata, trace });
+  error(message: string, trace?: string, context?: string | LogContext, metadata?: LogContext, userName?: string): void {
+    this.writeLog('error', message, context, { ...metadata, trace }, userName);
   }
 
-  warn(message: string, context?: string | LogContext, metadata?: LogContext): void {
-    this.writeLog('warn', message, context, metadata);
+  warn(message: string, context?: string | LogContext, metadata?: LogContext, userName?: string): void {
+    this.writeLog('warn', message, context, metadata, userName);
   }
 
-  debug(message: string, context?: string | LogContext, metadata?: LogContext): void {
-    this.writeLog('debug', message, context, metadata);
+  debug(message: string, context?: string | LogContext, metadata?: LogContext, userName?: string): void {
+    this.writeLog('debug', message, context, metadata, userName);
   }
 
-  verbose(message: string, context?: string | LogContext, metadata?: LogContext): void {
-    this.writeLog('verbose', message, context, metadata);
+  verbose(message: string, context?: string | LogContext, metadata?: LogContext, userName?: string): void {
+    this.writeLog('verbose', message, context, metadata, userName);
   }
 
   /**
@@ -46,8 +46,9 @@ export class AppLoggerService implements LoggerService {
     message: string,
     context: LogContext,
     serviceContext?: string,
+    userName?: string,
   ): void {
-    this.writeLog(level, message, serviceContext, context);
+    this.writeLog(level, message, serviceContext, context, userName);
   }
 
   private writeLog(
@@ -55,6 +56,7 @@ export class AppLoggerService implements LoggerService {
     message: string,
     context?: string | LogContext,
     metadata?: LogContext,
+    userName?: string,
   ): void {
     if (!this.shouldLog(level)) {
       return;
@@ -63,15 +65,20 @@ export class AppLoggerService implements LoggerService {
     const timestamp = new Date().toISOString();
     const logContext = typeof context === 'string' ? context : undefined;
     const logMetadata = typeof context === 'object' ? context : metadata || {};
+    
+    // Prepend userName to message
+    const userNamePrefix = userName ? `[${userName}] ` : '';
+    const finalMessage = `${userNamePrefix}${message}`;
 
     if (this.isProduction) {
       // Structured JSON for CloudWatch and log aggregators
       const logEntry = {
         timestamp,
         level: level.toUpperCase(),
-        message,
+        message: finalMessage,
         ...(logContext && { context: logContext }),
         ...logMetadata,
+        ...(userName && { userName }),
         service: this.config.serviceName,
         version: this.config.serviceVersion,
       };
@@ -85,7 +92,7 @@ export class AppLoggerService implements LoggerService {
           : '';
       const levelEmoji = this.getLevelEmoji(level);
       console.log(
-        `${levelEmoji} [${timestamp}] [${level.toUpperCase()}]${contextStr} ${message}${metadataStr}`,
+        `${levelEmoji} [${timestamp}] [${level.toUpperCase()}]${contextStr} ${finalMessage}${metadataStr}`,
       );
     }
   }

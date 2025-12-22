@@ -16,7 +16,7 @@ export class LoginUseCase {
   ) {}
 
   async execute(dto: LoginDto): Promise<AuthResponseDto> {
-    this.logger.log('Login attempt', 'LoginUseCase', { usernameOrEmail: dto.usernameOrEmail });
+    this.logger.log('Login attempt', 'LoginUseCase', { usernameOrEmail: dto.usernameOrEmail }, dto.usernameOrEmail);
 
     // Find user by username or email
     let user = await this.userRepository.findByUsername(dto.usernameOrEmail);
@@ -27,34 +27,34 @@ export class LoginUseCase {
     }
 
     if (!user) {
-      this.logger.warn('Login failed - user not found', 'LoginUseCase', { usernameOrEmail: dto.usernameOrEmail });
+      this.logger.warn('Login failed - user not found', 'LoginUseCase', { usernameOrEmail: dto.usernameOrEmail }, dto.usernameOrEmail);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     // Verify password
-    this.logger.debug('Verifying password', 'LoginUseCase', { userId: user.id });
-    const isPasswordValid = await this.passwordHasher.verify(dto.password, user.getPasswordHash());
+    this.logger.debug('Verifying password', 'LoginUseCase', { userId: user.id }, user.username);
+    const isPasswordValid = await this.passwordHasher.verify(dto.password, user.getPasswordHash(), user.username);
 
     if (!isPasswordValid) {
-      this.logger.warn('Login failed - invalid password', 'LoginUseCase', { userId: user.id });
+      this.logger.warn('Login failed - invalid password', 'LoginUseCase', { userId: user.id }, user.username);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     this.logger.log('User logged in successfully', 'LoginUseCase', {
       userId: user.id,
       username: user.username,
-    });
+    }, user.username);
 
     // Generate tokens
     const accessToken = this.jwtService.sign({
       userId: user.id,
       email: user.mail,
-    });
+    }, user.username);
 
     const refreshToken = this.jwtService.signRefreshToken({
       userId: user.id,
       email: user.mail,
-    });
+    }, user.username);
 
     return {
       accessToken,

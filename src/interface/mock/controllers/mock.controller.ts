@@ -72,16 +72,17 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
       status: 401,
       description: 'Unauthorized - authentication required',
     })
-    async createMock(@Body() createMockDto: CreateMockDto): Promise<MockResponseDto> {
+    async createMock(@Body() createMockDto: CreateMockDto, @Request() req: AuthenticatedRequest): Promise<MockResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
       this.logger.log('Received create mock request', 'MockController', {
         title: createMockDto.mock.title,
-      });
+      }, userName);
   
       try {
-        const result = await this.createMockUseCase.execute(createMockDto);
+        const result = await this.createMockUseCase.execute(createMockDto, userName);
         this.logger.log('Mock created successfully', 'MockController', {
           mockId: result.id,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -91,6 +92,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
           {
             error: error instanceof Error ? error.message : 'unknown',
           },
+          userName,
         );
   
         if (error instanceof HttpException) {
@@ -119,14 +121,15 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
       status: 401,
       description: 'Unauthorized - authentication required',
     })
-    async fetchMocks(): Promise<FetchMocksResponseDto> {
-      this.logger.log('Received fetch mocks request', 'MockController');
+    async fetchMocks(@Request() req: AuthenticatedRequest): Promise<FetchMocksResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
+      this.logger.log('Received fetch mocks request', 'MockController', undefined, userName);
 
       try {
-        const result = await this.fetchMocksUseCase.execute();
+        const result = await this.fetchMocksUseCase.execute(userName);
         this.logger.log('Mocks fetched successfully', 'MockController', {
           count: result.mocks.length,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -136,6 +139,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
           {
             error: error instanceof Error ? error.message : 'unknown',
           },
+          userName,
         );
 
         if (error instanceof HttpException) {
@@ -178,27 +182,28 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
       @Body() startAttemptDto: StartAttemptDto,
       @Request() req: AuthenticatedRequest,
     ): Promise<StartAttemptResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
       this.logger.log('Received start attempt request', 'MockController', {
         mockId: startAttemptDto.mockId,
         hasUser: !!req.user,
         userId: req.user?.userId,
         authHeader: req.headers.authorization ? 'present' : 'missing',
-      });
+      }, userName);
 
       if (!req.user?.userId) {
         this.logger.warn('User not authenticated in start attempt', 'MockController', {
           mockId: startAttemptDto.mockId,
           hasAuthHeader: !!req.headers.authorization,
-        });
+        }, 'SYSTEM');
         throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
       }
 
       try {
-        const result = await this.startAttemptUseCase.execute(startAttemptDto, req.user.userId);
+        const result = await this.startAttemptUseCase.execute(startAttemptDto, req.user.userId, userName);
         this.logger.log('Attempt started successfully', 'MockController', {
           attemptId: result.attemptId,
           mockId: result.mockId,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -209,6 +214,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
             error: error instanceof Error ? error.message : 'unknown',
             mockId: startAttemptDto.mockId,
           },
+          userName,
         );
 
         if (error instanceof HttpException) {
@@ -258,28 +264,29 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
       @Body() submitAttemptDto: SubmitAttemptDto,
       @Request() req: AuthenticatedRequest,
     ): Promise<SubmitAttemptResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
       this.logger.log('Received submit attempt request', 'MockController', {
         attemptId: submitAttemptDto.attemptId,
         answersCount: submitAttemptDto.answers.length,
         hasUser: !!req.user,
         userId: req.user?.userId,
-      });
+      }, userName);
 
       if (!req.user?.userId) {
         this.logger.warn('User not authenticated in submit attempt', 'MockController', {
           attemptId: submitAttemptDto.attemptId,
           hasAuthHeader: !!req.headers.authorization,
-        });
+        }, 'SYSTEM');
         throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
       }
 
       try {
-        const result = await this.submitAttemptUseCase.execute(submitAttemptDto, req.user.userId);
+        const result = await this.submitAttemptUseCase.execute(submitAttemptDto, req.user.userId, userName);
         this.logger.log('Attempt submitted successfully', 'MockController', {
           attemptId: result.attemptId,
           score: result.score,
           percentage: result.percentage,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -290,6 +297,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
             error: error instanceof Error ? error.message : 'unknown',
             attemptId: submitAttemptDto.attemptId,
           },
+          userName,
         );
 
         if (error instanceof HttpException) {
@@ -330,26 +338,27 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
       @Param('mockId') mockId: string,
       @Request() req: AuthenticatedRequest,
     ): Promise<ViewAnswersResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
       this.logger.log('Received view answers request', 'MockController', {
         mockId,
         hasUser: !!req.user,
         userId: req.user?.userId,
-      });
+      }, userName);
 
       if (!req.user?.userId) {
         this.logger.warn('User not authenticated in view answers', 'MockController', {
           mockId,
           hasAuthHeader: !!req.headers.authorization,
-        });
+        }, 'SYSTEM');
         throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
       }
 
       try {
-        const result = await this.viewAnswersUseCase.execute(mockId);
+        const result = await this.viewAnswersUseCase.execute(mockId, userName);
         this.logger.log('Answers retrieved successfully', 'MockController', {
           mockId: result.mockId,
           sectionsCount: result.sections.length,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -360,6 +369,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
             error: error instanceof Error ? error.message : 'unknown',
             mockId,
           },
+          userName,
         );
 
         if (error instanceof HttpException) {
@@ -391,24 +401,25 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
     async getMyAttempts(
       @Request() req: AuthenticatedRequest,
     ): Promise<UserAttemptsResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
       this.logger.log('Received get my attempts request', 'MockController', {
         hasUser: !!req.user,
         userId: req.user?.userId,
-      });
+      }, userName);
 
       if (!req.user?.userId) {
         this.logger.warn('User not authenticated in get my attempts', 'MockController', {
           hasAuthHeader: !!req.headers.authorization,
-        });
+        }, 'SYSTEM');
         throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
       }
 
       try {
-        const result = await this.fetchUserAttemptsUseCase.execute(req.user.userId);
+        const result = await this.fetchUserAttemptsUseCase.execute(req.user.userId, userName);
         this.logger.log('User attempts retrieved successfully', 'MockController', {
           userId: req.user.userId,
           attemptsCount: result.attempts.length,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -419,6 +430,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
             error: error instanceof Error ? error.message : 'unknown',
             userId: req.user?.userId,
           },
+          userName,
         );
 
         if (error instanceof HttpException) {
@@ -455,26 +467,27 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
       @Param('attemptId') attemptId: string,
       @Request() req: AuthenticatedRequest,
     ): Promise<AttemptDetailsResponseDto> {
+      const userName = req.user?.userId || 'SYSTEM';
       this.logger.log('Received get attempt details request', 'MockController', {
         attemptId,
         hasUser: !!req.user,
         userId: req.user?.userId,
-      });
+      }, userName);
 
       if (!req.user?.userId) {
         this.logger.warn('User not authenticated in get attempt details', 'MockController', {
           attemptId,
           hasAuthHeader: !!req.headers.authorization,
-        });
+        }, 'SYSTEM');
         throw new UnauthorizedException('Authentication required. Please provide a valid JWT token in the Authorization header.');
       }
 
       try {
-        const result = await this.fetchAttemptDetailsUseCase.execute(attemptId, req.user.userId);
+        const result = await this.fetchAttemptDetailsUseCase.execute(attemptId, req.user.userId, userName);
         this.logger.log('Attempt details retrieved successfully', 'MockController', {
           attemptId,
           userId: req.user.userId,
-        });
+        }, userName);
         return result;
       } catch (error) {
         this.logger.error(
@@ -486,6 +499,7 @@ import { AttemptDetailsResponseDto } from '@application/mock/dto/attempt-details
             attemptId,
             userId: req.user?.userId,
           },
+          userName,
         );
 
         if (error instanceof HttpException) {

@@ -10,11 +10,11 @@ export class FetchAttemptDetailsUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(attemptId: string, userId: string): Promise<AttemptDetailsResponseDto> {
+  async execute(attemptId: string, userId: string, userName?: string): Promise<AttemptDetailsResponseDto> {
     this.logger.log('Fetching attempt details', 'FetchAttemptDetailsUseCase', {
       attemptId,
       userId,
-    });
+    }, userName || userId);
 
     const attempt = await this.mockRepository.fetchAttemptWithAnswers(attemptId, userId);
 
@@ -22,14 +22,14 @@ export class FetchAttemptDetailsUseCase {
       this.logger.warn('Attempt not found or does not belong to user', 'FetchAttemptDetailsUseCase', {
         attemptId,
         userId,
-      });
+      }, userName || userId);
       throw new NotFoundException('Attempt not found');
     }
 
     this.logger.log('Attempt details fetched successfully', 'FetchAttemptDetailsUseCase', {
       attemptId,
       userId,
-    });
+    }, userName || userId);
 
     return {
       attemptId: attempt.attemptId,

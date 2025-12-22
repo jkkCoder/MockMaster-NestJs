@@ -25,12 +25,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit() {
     try {
       await this.$connect();
-      this.logger.log('Prisma client connected successfully', 'PrismaService');
+      this.logger.log('Prisma client connected successfully', 'PrismaService', undefined, 'SYSTEM');
     } catch (error) {
       this.logger.error(
         'Failed to connect to database',
         error instanceof Error ? error.stack : undefined,
         'PrismaService',
+        undefined,
+        'SYSTEM',
       );
       throw error;
     }
@@ -38,7 +40,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleDestroy() {
     await this.$disconnect();
-    this.logger.log('Prisma client disconnected', 'PrismaService');
+    this.logger.log('Prisma client disconnected', 'PrismaService', undefined, 'SYSTEM');
   }
 }
 

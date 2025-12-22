@@ -54,14 +54,14 @@ import { LoginUseCase } from '@application/auth/use-cases/login.user-case';
       this.logger.log('Received registration request', 'AuthController', {
         username: registerDto.username,
         mail: registerDto.mail,
-      });
+      }, registerDto.username);
   
       try {
         const result = await this.registerUseCase.execute(registerDto);
         this.logger.log('Registration completed successfully', 'AuthController', {
           userId: result.user.id,
           username: result.user.username,
-        });
+        }, result.user.username);
         return result;
       } catch (error) {
         this.logger.error(
@@ -72,6 +72,7 @@ import { LoginUseCase } from '@application/auth/use-cases/login.user-case';
             username: registerDto.username,
             error: error instanceof Error ? error.message : 'unknown',
           },
+          registerDto.username,
         );
   
         if (error instanceof HttpException) {
@@ -109,14 +110,14 @@ import { LoginUseCase } from '@application/auth/use-cases/login.user-case';
     async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
       this.logger.log('Received login request', 'AuthController', {
         usernameOrEmail: loginDto.usernameOrEmail,
-      });
+      }, loginDto.usernameOrEmail);
   
       try {
         const result = await this.loginUseCase.execute(loginDto);
         this.logger.log('Login completed successfully', 'AuthController', {
           userId: result.user.id,
           username: result.user.username,
-        });
+        }, result.user.username);
         return result;
       } catch (error) {
         this.logger.error(
@@ -127,6 +128,7 @@ import { LoginUseCase } from '@application/auth/use-cases/login.user-case';
             usernameOrEmail: loginDto.usernameOrEmail,
             error: error instanceof Error ? error.message : 'unknown',
           },
+          loginDto.usernameOrEmail,
         );
   
         if (error instanceof HttpException) {

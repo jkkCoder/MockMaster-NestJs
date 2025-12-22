@@ -17,25 +17,25 @@ export class RegisterUseCase {
   ) {}
 
   async execute(dto: RegisterDto): Promise<AuthResponseDto> {
-    this.logger.log('Registering new user', 'RegisterUseCase', { username: dto.username, mail: dto.mail });
+    this.logger.log('Registering new user', 'RegisterUseCase', { username: dto.username, mail: dto.mail }, dto.username);
 
     // Check if username already exists
     const existingUserByUsername = await this.userRepository.findByUsername(dto.username);
     if (existingUserByUsername) {
-      this.logger.warn('Registration failed - username already exists', 'RegisterUseCase', { username: dto.username });
+      this.logger.warn('Registration failed - username already exists', 'RegisterUseCase', { username: dto.username }, dto.username);
       throw new ConflictException('Username already exists');
     }
 
     // Check if email already exists
     const existingUserByEmail = await this.userRepository.findByEmail(dto.mail);
     if (existingUserByEmail) {
-      this.logger.warn('Registration failed - email already exists', 'RegisterUseCase', { mail: dto.mail });
+      this.logger.warn('Registration failed - email already exists', 'RegisterUseCase', { mail: dto.mail }, dto.username);
       throw new ConflictException('Email already exists');
     }
 
     // Hash password
-    this.logger.debug('Hashing password', 'RegisterUseCase', { username: dto.username });
-    const passwordHash = await this.passwordHasher.hash(dto.password);
+    this.logger.debug('Hashing password', 'RegisterUseCase', { username: dto.username }, dto.username);
+    const passwordHash = await this.passwordHasher.hash(dto.password, dto.username);
 
     // Create domain entity
     const user = User.create(
@@ -51,18 +51,18 @@ export class RegisterUseCase {
     this.logger.log('User registered successfully', 'RegisterUseCase', {
       userId: savedUser.id,
       username: savedUser.username,
-    });
+    }, savedUser.username);
 
     // Generate tokens
     const accessToken = this.jwtService.sign({
       userId: savedUser.id,
       email: savedUser.mail,
-    });
+    }, savedUser.username);
 
     const refreshToken = this.jwtService.signRefreshToken({
       userId: savedUser.id,
       email: savedUser.mail,
-    });
+    }, savedUser.username);
 
     return {
       accessToken,

@@ -17,7 +17,7 @@ export class UserRepository implements UserRepositoryPort {
       userId: user.id,
       username: user.username,
       mail: user.mail,
-    });
+    }, user.username);
 
     try {
       // If user.id is empty, let Prisma generate it
@@ -46,7 +46,7 @@ export class UserRepository implements UserRepositoryPort {
         userId: saved.id,
         username: saved.username,
         duration: `${duration}ms`,
-      });
+      }, saved.username);
 
       return this.toDomain(saved);
     } catch (error) {
@@ -60,6 +60,7 @@ export class UserRepository implements UserRepositoryPort {
           username: user.username,
           error: error instanceof Error ? error.message : 'unknown',
         },
+        user.username,
       );
       throw error;
     }
@@ -67,7 +68,7 @@ export class UserRepository implements UserRepositoryPort {
 
   async findByUsername(username: string): Promise<User | null> {
     const startTime = Date.now();
-    this.logger.debug('Finding user by username', 'UserRepository', { username });
+    this.logger.debug('Finding user by username', 'UserRepository', { username }, username);
 
     try {
       const user = await this.prisma.user.findUnique({
@@ -80,9 +81,9 @@ export class UserRepository implements UserRepositoryPort {
           userId: user.id,
           username,
           duration: `${duration}ms`,
-        });
+        }, username);
       } else {
-        this.logger.debug('User not found by username', 'UserRepository', { username, duration: `${duration}ms` });
+        this.logger.debug('User not found by username', 'UserRepository', { username, duration: `${duration}ms` }, username);
       }
 
       return user ? this.toDomain(user) : null;
@@ -96,6 +97,7 @@ export class UserRepository implements UserRepositoryPort {
           username,
           error: error instanceof Error ? error.message : 'unknown',
         },
+        username,
       );
       throw error;
     }
@@ -103,7 +105,7 @@ export class UserRepository implements UserRepositoryPort {
 
   async findByEmail(email: string): Promise<User | null> {
     const startTime = Date.now();
-    this.logger.debug('Finding user by email', 'UserRepository', { email });
+    this.logger.debug('Finding user by email', 'UserRepository', { email }, email);
 
     try {
       const user = await this.prisma.user.findUnique({
@@ -116,9 +118,9 @@ export class UserRepository implements UserRepositoryPort {
           userId: user.id,
           email,
           duration: `${duration}ms`,
-        });
+        }, user.username);
       } else {
-        this.logger.debug('User not found by email', 'UserRepository', { email, duration: `${duration}ms` });
+        this.logger.debug('User not found by email', 'UserRepository', { email, duration: `${duration}ms` }, email);
       }
 
       return user ? this.toDomain(user) : null;
@@ -132,6 +134,7 @@ export class UserRepository implements UserRepositoryPort {
           email,
           error: error instanceof Error ? error.message : 'unknown',
         },
+        email,
       );
       throw error;
     }
@@ -139,7 +142,7 @@ export class UserRepository implements UserRepositoryPort {
 
   async findById(id: string): Promise<User | null> {
     const startTime = Date.now();
-    this.logger.debug('Finding user by ID', 'UserRepository', { userId: id });
+    this.logger.debug('Finding user by ID', 'UserRepository', { userId: id }, id);
 
     try {
       const user = await this.prisma.user.findUnique({
@@ -152,9 +155,9 @@ export class UserRepository implements UserRepositoryPort {
           userId: id,
           username: user.username,
           duration: `${duration}ms`,
-        });
+        }, user.username);
       } else {
-        this.logger.debug('User not found by ID', 'UserRepository', { userId: id, duration: `${duration}ms` });
+        this.logger.debug('User not found by ID', 'UserRepository', { userId: id, duration: `${duration}ms` }, id);
       }
 
       return user ? this.toDomain(user) : null;
@@ -168,6 +171,7 @@ export class UserRepository implements UserRepositoryPort {
           userId: id,
           error: error instanceof Error ? error.message : 'unknown',
         },
+        id,
       );
       throw error;
     }

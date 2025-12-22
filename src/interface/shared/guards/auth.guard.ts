@@ -70,13 +70,13 @@ export class AuthGuard implements CanActivate {
             userId: payload.userId,
             email: payload.email,
             path: request.path,
-          });
+          }, payload.userId);
         } catch (error) {
           // If token is invalid, just log and continue (auth is disabled)
           this.logger.debug('Invalid token provided but auth is disabled', 'AuthGuard', {
             path: request.path,
             error: error instanceof Error ? error.message : 'unknown',
-          });
+          }, 'SYSTEM');
         }
       }
       // Auth is disabled, allow all requests
@@ -89,7 +89,7 @@ export class AuthGuard implements CanActivate {
         path: request.path,
         method: request.method,
         requestId: request.requestId,
-      });
+      }, 'SYSTEM');
       throw new UnauthorizedException('Authentication token is required');
     }
 
@@ -106,7 +106,7 @@ export class AuthGuard implements CanActivate {
         email: payload.email,
         path: request.path,
         requestId: request.requestId,
-      });
+      }, payload.userId);
 
       return true;
     } catch (error) {
@@ -115,7 +115,7 @@ export class AuthGuard implements CanActivate {
         method: request.method,
         error: error instanceof Error ? error.message : 'unknown',
         requestId: request.requestId,
-      });
+      }, 'SYSTEM');
       throw new UnauthorizedException('Invalid or expired authentication token');
     }
   }

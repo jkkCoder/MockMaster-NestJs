@@ -10,21 +10,21 @@ export class ViewAnswersUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(mockId: string): Promise<ViewAnswersResponseDto> {
+  async execute(mockId: string, userName?: string): Promise<ViewAnswersResponseDto> {
     this.logger.log('Viewing answers for mock', 'ViewAnswersUseCase', {
       mockId,
-    });
+    }, userName || 'SYSTEM');
 
     // Fetch mock with questions and options including correct answers
     const mock = await this.mockRepository.fetchMockWithQuestionsAndOptionsWithAnswers(mockId);
 
     if (!mock) {
-      this.logger.warn('Mock not found', 'ViewAnswersUseCase', { mockId });
+      this.logger.warn('Mock not found', 'ViewAnswersUseCase', { mockId }, userName || 'SYSTEM');
       throw new NotFoundException('Mock not found');
     }
 
     if (!mock.sections || mock.sections.length === 0) {
-      this.logger.warn('Mock has no sections', 'ViewAnswersUseCase', { mockId });
+      this.logger.warn('Mock has no sections', 'ViewAnswersUseCase', { mockId }, userName || 'SYSTEM');
       throw new BadRequestException('Mock has no sections');
     }
 

@@ -11,22 +11,22 @@ export class StartAttemptUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(dto: StartAttemptDto, userId: string): Promise<StartAttemptResponseDto> {
+  async execute(dto: StartAttemptDto, userId: string, userName?: string): Promise<StartAttemptResponseDto> {
     this.logger.log('Starting attempt', 'StartAttemptUseCase', {
       mockId: dto.mockId,
       userId,
-    });
+    }, userName || userId);
 
     // Fetch mock with questions and options
     const mock = await this.mockRepository.fetchMockWithQuestionsAndOptions(dto.mockId);
 
     if (!mock) {
-      this.logger.warn('Mock not found', 'StartAttemptUseCase', { mockId: dto.mockId });
+      this.logger.warn('Mock not found', 'StartAttemptUseCase', { mockId: dto.mockId }, userName || userId);
       throw new NotFoundException('Mock not found');
     }
 
     if (!mock.sections || mock.sections.length === 0) {
-      this.logger.warn('Mock has no sections', 'StartAttemptUseCase', { mockId: dto.mockId });
+      this.logger.warn('Mock has no sections', 'StartAttemptUseCase', { mockId: dto.mockId }, userName || userId);
       throw new BadRequestException('Mock has no sections');
     }
 
@@ -40,7 +40,7 @@ export class StartAttemptUseCase {
       attemptId: attempt.id,
       mockId: dto.mockId,
       userId,
-    });
+    }, userName || userId);
 
     // Map to response DTO
     return {

@@ -10,17 +10,17 @@ export class FetchUserAttemptsUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(userId: string): Promise<UserAttemptsResponseDto> {
+  async execute(userId: string, userName?: string): Promise<UserAttemptsResponseDto> {
     this.logger.log('Fetching user attempts', 'FetchUserAttemptsUseCase', {
       userId,
-    });
+    }, userName || userId);
 
     const attempts = await this.mockRepository.fetchUserAttempts(userId);
 
     this.logger.log('User attempts fetched successfully', 'FetchUserAttemptsUseCase', {
       userId,
       attemptsCount: attempts.length,
-    });
+    }, userName || userId);
 
     return {
       attempts,

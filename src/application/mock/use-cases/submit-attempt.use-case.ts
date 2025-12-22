@@ -17,12 +17,12 @@ export class SubmitAttemptUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(dto: SubmitAttemptDto, userId: string): Promise<SubmitAttemptResponseDto> {
+  async execute(dto: SubmitAttemptDto, userId: string, userName?: string): Promise<SubmitAttemptResponseDto> {
     this.logger.log('Submitting attempt', 'SubmitAttemptUseCase', {
       attemptId: dto.attemptId,
       userId,
       answersCount: dto.answers.length,
-    });
+    }, userName || userId);
 
     // First check if attempt exists
     const attemptExists = await this.mockRepository.fetchAttemptById(dto.attemptId);
@@ -31,7 +31,7 @@ export class SubmitAttemptUseCase {
       this.logger.warn('Attempt not found', 'SubmitAttemptUseCase', { 
         attemptId: dto.attemptId,
         userId,
-      });
+      }, userName || userId);
       throw new NotFoundException(`Attempt with ID ${dto.attemptId} not found`);
     }
 
@@ -41,7 +41,7 @@ export class SubmitAttemptUseCase {
         attemptId: dto.attemptId,
         attemptUserId: attemptExists.userId,
         requestUserId: userId,
-      });
+      }, userName || userId);
       throw new ForbiddenException('Attempt does not belong to you');
     }
 
@@ -50,7 +50,7 @@ export class SubmitAttemptUseCase {
       this.logger.warn('Attempt already submitted', 'SubmitAttemptUseCase', {
         attemptId: dto.attemptId,
         status: attemptExists.status,
-      });
+      }, userName || userId);
       throw new ConflictException(`Attempt has already been ${attemptExists.status.toLowerCase()}`);
     }
 
@@ -62,7 +62,7 @@ export class SubmitAttemptUseCase {
       this.logger.error('Failed to fetch attempt details', 'SubmitAttemptUseCase', {
         attemptId: dto.attemptId,
         userId,
-      });
+      }, undefined, userName || userId);
       throw new NotFoundException('Failed to fetch attempt details');
     }
 
@@ -72,7 +72,7 @@ export class SubmitAttemptUseCase {
     if (questions.length === 0) {
       this.logger.warn('No questions found for mock', 'SubmitAttemptUseCase', {
         mockId: attempt.mockId,
-      });
+      }, userName || userId);
       throw new BadRequestException('Mock has no questions');
     }
 
@@ -90,7 +90,7 @@ export class SubmitAttemptUseCase {
       this.logger.warn('Invalid question IDs provided', 'SubmitAttemptUseCase', {
         invalidQuestionIds: invalidQuestionIds.join(', '),
         mockId: attempt.mockId,
-      });
+      }, userName || userId);
       throw new BadRequestException(
         `Invalid question IDs: ${invalidQuestionIds.join(', ')}`
       );
@@ -262,7 +262,7 @@ export class SubmitAttemptUseCase {
       score: totalScore,
       percentage,
       totalMarks,
-    });
+    }, userName || userId);
 
     // Fetch section names - we need to get actual section names
     // For now, we'll need to fetch them. Let me update the logic to fetch section details

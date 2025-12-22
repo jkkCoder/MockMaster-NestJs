@@ -105,8 +105,8 @@ async function bootstrap() {
   await app.listen(config.port);
 
   const logger = app.get(AppLoggerService);
-  logger.log(`Application is running on: http://localhost:${config.port}`, 'Bootstrap');
-  logger.log(`Swagger documentation available at: http://localhost:${config.port}/docs`, 'Bootstrap');
+  logger.log(`Application is running on: http://localhost:${config.port}`, 'Bootstrap', {}, 'SYSTEM');
+  logger.log(`Swagger documentation available at: http://localhost:${config.port}/docs`, 'Bootstrap', {}, 'SYSTEM');
   
   // Log API versioning configuration
   const apiPrefix = apiConf.versioningStrategy === 'url' || apiConf.versioningStrategy === 'both'
@@ -115,21 +115,25 @@ async function bootstrap() {
   logger.log(
     `API endpoints available at: http://localhost:${config.port}/${apiPrefix}`,
     'Bootstrap',
+    {},
+    'SYSTEM',
   );
   logger.log(
     `API versioning strategy: ${apiConf.versioningStrategy}, Supported versions: ${apiConf.supportedVersions.join(', ')}`,
     'Bootstrap',
+    {},
+    'SYSTEM',
   );
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
-    logger.log('Shutting down gracefully...', 'Bootstrap');
+    logger.log('Shutting down gracefully...', 'Bootstrap', {}, 'SYSTEM');
     await app.close();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
-    logger.log('Shutting down gracefully...', 'Bootstrap');
+    logger.log('Shutting down gracefully...', 'Bootstrap', {}, 'SYSTEM');
     await app.close();
     process.exit(0);
   });

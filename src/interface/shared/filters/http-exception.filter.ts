@@ -28,6 +28,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : 'Internal server error';
 
     // Log the error
+    const userName = (request as any).user?.userId || 'SYSTEM';
     this.logger.error(
       `Error occurred: ${typeof message === 'string' ? message : JSON.stringify(message)}`,
       exception instanceof Error ? exception.stack : undefined,
@@ -38,6 +39,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         statusCode: status,
         body: request.body,
       },
+      userName,
     );
 
     response.status(status).json({

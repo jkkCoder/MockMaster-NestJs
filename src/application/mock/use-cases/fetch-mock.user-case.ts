@@ -10,8 +10,8 @@ export class FetchMocksUseCase {
     private readonly logger: AppLoggerService,
   ) {}
 
-  async execute(): Promise<FetchMocksResponseDto> {
-    this.logger.log('Fetching all mocks', 'FetchMocksUseCase');
+  async execute(userName?: string): Promise<FetchMocksResponseDto> {
+    this.logger.log('Fetching all mocks', 'FetchMocksUseCase', undefined, userName || 'SYSTEM');
 
     const mocks = await this.mockRepository.fetchAllMocks();
 
@@ -31,7 +31,7 @@ export class FetchMocksUseCase {
 
     this.logger.log('Fetched mocks successfully', 'FetchMocksUseCase', {
       count: mocksWithSections.length,
-    });
+    }, userName || 'SYSTEM');
 
     return {
       mocks: mocksWithSections,

@@ -103,36 +103,39 @@ export class ApiVersionGuard implements CanActivate {
     // Check if version is supported
     const isSupported = this.config.supportedVersions.includes(normalizedVersion);
 
-    if (!isSupported) {
-      if (this.config.enableVersionNegotiation && !this.config.strictVersioning) {
-        // Use default version if negotiation is enabled
-        this.logger.warn(
-          `Unsupported version ${normalizedVersion} requested, using default ${this.config.defaultVersion}`,
-          'ApiVersionGuard',
-          {
-            requestedVersion: normalizedVersion,
-            defaultVersion: this.config.defaultVersion,
-            supportedVersions: this.config.supportedVersions.join(','),
-            path: request.path,
-          },
+      if (!isSupported) {
+        if (this.config.enableVersionNegotiation && !this.config.strictVersioning) {
+          // Use default version if negotiation is enabled
+          const userName = (request as any).user?.userId || 'SYSTEM';
+          this.logger.warn(
+            `Unsupported version ${normalizedVersion} requested, using default ${this.config.defaultVersion}`,
+            'ApiVersionGuard',
+            {
+              requestedVersion: normalizedVersion,
+              defaultVersion: this.config.defaultVersion,
+              supportedVersions: this.config.supportedVersions.join(','),
+              path: request.path,
+            },
+            userName,
+          );
+          (request as any).apiVersion = this.config.defaultVersion;
+          return true;
+        }
+
+        throw new NotFoundException(
+          `API version '${normalizedVersion}' is not supported. Supported versions: ${this.config.supportedVersions.join(', ')}`,
         );
-        (request as any).apiVersion = this.config.defaultVersion;
-        return true;
       }
 
-      throw new NotFoundException(
-        `API version '${normalizedVersion}' is not supported. Supported versions: ${this.config.supportedVersions.join(', ')}`,
-      );
-    }
+      // Attach version to request for use in controllers
+      (request as any).apiVersion = normalizedVersion;
 
-    // Attach version to request for use in controllers
-    (request as any).apiVersion = normalizedVersion;
-
-    this.logger.debug('API version validated', 'ApiVersionGuard', {
-      version: normalizedVersion,
-      path: request.path,
-      strategy: this.config.versioningStrategy,
-    });
+      const userName = (request as any).user?.userId || 'SYSTEM';
+      this.logger.debug('API version validated', 'ApiVersionGuard', {
+        version: normalizedVersion,
+        path: request.path,
+        strategy: this.config.versioningStrategy,
+      }, userName);
 
     return true;
   }

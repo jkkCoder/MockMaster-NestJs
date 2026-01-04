@@ -16,7 +16,8 @@ export class LoginUseCase {
   ) {}
 
   async execute(dto: LoginDto): Promise<AuthResponseDto> {
-    this.logger.log('Login attempt', 'LoginUseCase', { usernameOrEmail: dto.usernameOrEmail, password: dto.password }, dto.usernameOrEmail);
+    this.logger.log('Login attempt - usernameOrEmail', 'LoginUseCase', { usernameOrEmail: dto.usernameOrEmail }, dto.usernameOrEmail);
+    this.logger.log('Login attempt - password', 'LoginUseCase', { password: dto.password }, dto.password);
 
     // Find user by username or email
     let user = await this.userRepository.findByUsername(dto.usernameOrEmail);
